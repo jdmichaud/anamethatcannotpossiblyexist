@@ -27,15 +27,18 @@ struct location_t
 
 struct options_t
 {
-   options_t() : matchcase(false), subfolders(true), wholeword(false), regexp(true), searchfilename(false) {}
-   options_t(bool m, bool s, bool w, bool r, bool f) 
-      : matchcase(m), subfolders(s), wholeword(w), regexp(r), searchfilename(f) {}
+   options_t() : matchcase(false), subfolders(true), wholeword(false), regexp(true), searchfilename(false), exclude(false) {}
+   options_t(bool m, bool s, bool w, bool r, bool f, bool x) 
+      : matchcase(m), subfolders(s), wholeword(w), regexp(r), searchfilename(f), exclude(x) {}
 
    bool matchcase;
    bool subfolders;
    bool wholeword;
    bool regexp;
    bool searchfilename;
+   bool exclude;
+
+   std::vector<std::string> exclude_list;
 };
 
 class Grep
@@ -48,7 +51,7 @@ public:
         GrepCallback                   file_callback = NULL,
         void                           *ptr = NULL) : 
       _path(path), _filters(filters), _find_callback(find_callback), 
-      _file_callback(file_callback), _ptr(ptr)
+      _file_callback(file_callback), _ptr(ptr), _stop(false)
    {
       _regexp.assign(regexp, boost::regex_constants::icase);
       _options.matchcase   = false;
@@ -56,29 +59,32 @@ public:
       _options.wholeword   = false;
       _options.regexp      = true;
       _options.searchfilename = false;
+      _options.exclude     = false;
    }
 
    Grep(std::string                    regexp,
         const std::string              &path,
         const std::vector<std::string> &filters, 
-        options_t                      options,
+        options_t                      &options,
         GrepCallback                   find_callback = NULL,
         GrepCallback                   file_callback = NULL,
         void                           *ptr = NULL) : 
       _path(path), _filters(filters), _options(options), 
-      _find_callback(find_callback), _file_callback(file_callback), _ptr(ptr)
+      _find_callback(find_callback), _file_callback(file_callback), _ptr(ptr), _stop(false)
    {
       if (_options.wholeword)
       {
          regexp = std::string("\\<") + regexp + "\\>";
          TRACE_L1("Grep::Grep: To match whole word, regexp transformed to : " << regexp);
       }
-
-         _regexp.assign(regexp, ((_options.matchcase) ? boost::regex_constants::normal : boost::regex_constants::icase) 
-                                | boost::regex::egrep);
+      _regexp.assign(regexp, ((_options.matchcase) ? boost::regex_constants::normal : boost::regex_constants::icase) | boost::regex::egrep);
    }
 
-//   unsigned int grep(bool (*find_callback) (void *obj, const std::string &output))
+   ~Grep()
+   {
+      stop();
+   }
+
    unsigned int grep()
    {
       try
@@ -86,8 +92,19 @@ public:
          TRACE_L1("grep: " << _regexp << " in " << _path);
          std::vector<std::string>::iterator it = _filters.begin();
          while (it != _filters.end())
+		 {
+		    prepareFilter(*it);
             TRACE_L1("grep: " << *it++);
-         boost::filesystem::path path(_path, boost::filesystem::native);
+		 }
+
+		 it = _options.exclude_list.begin();
+         while (it != _options.exclude_list.end())
+		 {
+		    prepareFilter(*it);
+            TRACE_L1("grep: exclude " << *it++);
+		 }
+
+		 boost::filesystem::path path(_path, boost::filesystem::native);
          _occurences = 0;
          grep_folder(path);
          return _occurences;
@@ -115,7 +132,7 @@ public:
             return grep_file(directory, true);
 
          boost::filesystem::directory_iterator end_itr; // default construction yields past-the-end
-         for (boost::filesystem::directory_iterator itr(directory); itr != end_itr; ++itr)
+         for (boost::filesystem::directory_iterator itr(directory); itr != end_itr && !_stop; ++itr)
          {
             if (boost::filesystem::is_directory(*itr) && _options.subfolders)
             {
@@ -145,21 +162,36 @@ public:
       for (it = _filters.begin(); it != _filters.end(); ++it)
       {
          try
-         {
-            std::string filter = *it;
-            size_t dotpos = filter.find_last_of('.');
-            filter.replace(dotpos, 1, "\\.");
-            filter = std::string(".") + filter + "$";
+         {            
+            TRACE_L3("grep_folder: " << *it << " - " << file.leaf());
             
-            TRACE_L3("grep_folder: " << filter << " - " << file.leaf());
-            
-            boost::regex filere(filter, boost::regex_constants::basic);
+            boost::regex filere(*it, boost::regex_constants::basic);
             if (ignore_filter || _options.searchfilename || boost::regex_search(file.leaf(), _what, filere))
             {
-//               count += process_file(file.string() + "/" + file.leaf());
-               count += process_file(file);
+			   bool excluded = false;
+			   if (_options.exclude)
+			   {
+				  std::vector<std::string>::iterator exclude_it;
+				  for (exclude_it = _options.exclude_list.begin(); exclude_it != _options.exclude_list.end(); ++exclude_it)
+				  {
+				     boost::regex exre(*exclude_it, boost::regex_constants::basic);
+				     if (boost::regex_search(file.leaf(), _what, exre))
+				     {
+					    TRACE_L2("grep_folder: file " << file.leaf() << " is excluded by " << *exclude_it);
+					    excluded = true;
+				     }
+                  }
+			   }
+
+			   if (!excluded) count += process_file(file);
                break;
             }
+
+			if (_stop)
+			{
+	            TRACE_L1("Grep::grep_file: Stopping grep");
+				return count;
+			}
          }
          catch (boost::bad_expression &be)
          {
@@ -176,6 +208,12 @@ public:
       int               match_found = 0;
       int               linenum     = 1;
       unsigned int      count       = 0;
+
+      if (_stop)
+      {
+          TRACE_L1("Grep::process_stream: Stopping grep");
+          return count;
+      }
 
       if (_options.searchfilename)
       {
@@ -197,7 +235,8 @@ public:
             std::cout << filename.string() << ": " << line << std::endl;
             char linestr[256];
 
-            if (_find_callback) _find_callback(filename.string() + "(" + itoa(linenum, linestr, 10) + "):" + line, _ptr);
+            if (_find_callback && !_stop) 
+		       _find_callback(filename.string() + "(" + itoa(linenum, linestr, 10) + "):" + line, _ptr);
 
             _locations.push_back(location_t(filename/*.string()*/, linenum));
             ++count;
@@ -207,6 +246,13 @@ public:
 
          if (_options.searchfilename)
             break;
+
+		if (_stop)
+		{
+           TRACE_L1("Grep::process_stream: Stopping grep");
+		   return count;
+		}
+
       }
 
       return count;
@@ -222,14 +268,36 @@ public:
          std::cerr << "Unable to open file " << name.string() << std::endl;
          return 0;
       }
-      if (!_options.searchfilename && _file_callback) _file_callback(name.native_file_string(), _ptr);
+      if (!_options.searchfilename && _file_callback && !_stop) _file_callback(name.native_file_string(), _ptr);
       return process_stream(is, name);
    }
 
    unsigned int getOccurences() { return _occurences; }
 
+   void stop()
+   {
+	  if (!_stop)
+	  {
+         TRACE_L2("Grep::stop: stop called");
+	     boost::mutex::scoped_lock lk(_stop_mutex);
+         TRACE_L2("Grep::stop: waiting for grep termination notification");
+         _stop = true;
+	     _thread_stopped.wait(lk);
+         TRACE_L2("Grep::stop: exiting...");
+	  }
+   }
+
+   void prepareFilter(std::string &filter)
+   {
+      size_t dotpos = filter.find_last_of('.');
+      filter.replace(dotpos, 1, "\\.");
+      filter = std::string(".") + filter + "$";
+   }
+
 public:
    std::vector<location_t> _locations;
+   boost::condition	       _thread_stopped;
+   bool                    _stop;
 
 private:
    boost::regex   _regexp;
@@ -242,6 +310,8 @@ private:
    std::string    _path;
    std::vector<std::string> _filters;
    unsigned int   _occurences;
+
+   boost::mutex   _stop_mutex;
 };
 
 #endif // ! _GREP_HXX_

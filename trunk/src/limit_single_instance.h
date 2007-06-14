@@ -94,12 +94,12 @@ public:
 	   return _bAmITheFirst;
    }
 
-	// returns:
-	//		The command line the second instance was tried to launch with.
-	LPCTSTR GetSecondInstanceCmdLine() const
-   {
-	   return _pSharedData->pszCmdLine;
-   }
+  // returns:
+  //		The command line the second instance was tried to launch with.
+  LPCTSTR GetSecondInstanceCmdLine() const
+  {
+    return _pSharedData->pszCmdLine;
+  }
 
    // Override this to get notified when second instance was tried to launch.
 	virtual void OnSecondInstance()
