@@ -31,13 +31,19 @@ class GrepWindow : public FXMainWindow
          TRACE_L1("GrepWindow::onFind grep started on output window index " << _index);
 
          unsigned int occurences = _grep->grep();
-         char  occstr[256];
-         OutputWindow::callback(std::string(itoa(occurences, occstr, 10)) + " occurrence(s) have been found.", (void *) _index);
-         outputWindow[_index]->setExplicitTitle("");
+		 if (!_grep->_stop) // If output_window terminating, no need to add anything in it
+		 {
+		    char  occstr[256];
+		    OutputWindow::callback(std::string(itoa(occurences, occstr, 10)) + " occurrence(s) have been found.", (void *) _index);
+            outputWindow[_index]->setExplicitTitle("");
 
-         busyOutput[_index] = false;
+            busyOutput[_index] = false;
 
-         TRACE_L1("GrepWindow::onFind grep done on output window index " << _index);
+            TRACE_L1("GrepWindow::onFind grep done on output window index " << _index);
+		 }
+         TRACE_L2("grep: notifying grep stop");
+		 _grep->_stop = true;
+         _grep->_thread_stopped.notify_all();
       }
       
       Grep           *_grep;
@@ -60,7 +66,8 @@ public:
       ID_BROWSE,
       ID_ADVANCED,
       ID_KEYPRESS,
-      ID_SEARCHFILENAME_CHECK
+      ID_SEARCHFILENAME_CHECK,
+      ID_EXCLUDE_CHECK
    };
 
    long onExit(void);
@@ -72,6 +79,7 @@ public:
    void setOutputIndex(unsigned short index);
    long onCheck(FXObject* obj, FXSelector sel, void* ptr);
    void newExternalInstance(const std::string &command);
+   void getFilter(const std::string &str, std::vector<std::string> &v);
 
 protected:
   GrepWindow() {} //default constructor
@@ -79,6 +87,7 @@ protected:
   FXComboBox        *regexp; 
   FXComboBox        *filter;
   FXComboBox        *directory;
+  FXComboBox        *exclude_combo;
   FXButton          *find;
   FXButton          *cancel;
   FXButton          *browse;
@@ -90,6 +99,7 @@ protected:
   FXCheckButton     *subfolders;
   FXCheckButton     *outputpane2;
   FXCheckButton     *searchfilename;
+  FXCheckButton     *exclude;
 
   FXFont              *font;                    // Text window font
   FXString             searchpath;              // To search for files

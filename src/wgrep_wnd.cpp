@@ -23,6 +23,7 @@ FXDEFMAP(GrepWindow) GrepWindowMap[]={
   FXMAPFUNC(SEL_COMMAND,           GrepWindow::ID_ADVANCED,                GrepWindow::onAdvanced),
   FXMAPFUNC(SEL_COMMAND,           GrepWindow::ID_CLOSE,                   GrepWindow::onCancel),
   FXMAPFUNC(SEL_COMMAND,           GrepWindow::ID_SEARCHFILENAME_CHECK,    GrepWindow::onCheck),
+  FXMAPFUNC(SEL_COMMAND,           GrepWindow::ID_EXCLUDE_CHECK,		   GrepWindow::onCheck),
   FXMAPFUNC(SEL_KEYPRESS,          NULL,                                   GrepWindow::onKeyPress)
 };
 
@@ -91,6 +92,11 @@ GrepWindow::GrepWindow(FXApp *a, char *startingfolder)
    regexp->setNumVisible(4);
    filter->setNumVisible(4);
    directory->setNumVisible(4);
+
+   // Advanced part of the window
+   exclude       = new FXCheckButton(this, "Exclude:", this, ID_EXCLUDE_CHECK, CHECKBUTTON_NORMAL | LAYOUT_EXPLICIT | JUSTIFY_LEFT, 10, 155, 65, 20);
+   exclude_combo = new FXComboBox(this, 26, NULL, 0, COMBOBOX_NORMAL | LAYOUT_EXPLICIT, 100, 154, 173, 20);
+   exclude_combo->disable();
 }
   
 void GrepWindow::create()
@@ -99,6 +105,15 @@ void GrepWindow::create()
    FXMainWindow::create();
    // Make the main window appear
    show();
+}
+
+void GrepWindow::getFilter(const std::string &str, std::vector<std::string> &v)
+{
+   typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+   boost::char_separator<char>  sep(";,");
+   tokenizer                    tokens(str, sep);
+   for (tokenizer::iterator     tok_iter = tokens.begin(); tok_iter != tokens.end(); ++tok_iter)
+     v.push_back(*tok_iter);
 }
 
 long GrepWindow::onFind(FXObject*, FXSelector, void*)
@@ -113,13 +128,9 @@ long GrepWindow::onFind(FXObject*, FXSelector, void*)
       filter->setText("*.*");
    }
 
-   typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
    std::string                  str = filtr;
-   boost::char_separator<char>  sep(";,");
    std::vector<std::string>     filters;
-   tokenizer                    tokens(str, sep);
-   for (tokenizer::iterator     tok_iter = tokens.begin(); tok_iter != tokens.end(); ++tok_iter)
-     filters.push_back(*tok_iter);
+   getFilter(str, filters);
 
    FXString    temp  = regexp->getText();
    const char  *re   = temp.text();
@@ -146,6 +157,13 @@ long GrepWindow::onFind(FXObject*, FXSelector, void*)
    options.subfolders   = subfolders->getCheck();
    options.regexp       = regexpenabled->getCheck();
    options.searchfilename = searchfilename->getCheck();
+   if (options.exclude = exclude->getCheck())
+   {
+      FXString     tempx = exclude_combo->getText();
+      std::string  exclude_filter(tempx.text());
+      TRACE_L1("GrepWindow::onFind: excluding: " << exclude_filter);
+      getFilter(exclude_filter, options.exclude_list);
+   }
 
    if (outputpane2->getCheck() || !outputWindow[_currentOutputIndex])
    {
@@ -212,12 +230,13 @@ long GrepWindow::onAdvanced(FXObject*, FXSelector, void*)
   {
     _advanced = true;
     advanced->setText("Advanced<<");
-
+	resize(390, 300);
   }
   else
   {
     _advanced = false;
     advanced->setText("Advanced>>");
+	resize(390, 148);
   }
 
   return 0;
@@ -263,10 +282,19 @@ long GrepWindow::onCheck(FXObject* obj, FXSelector sel, void* ptr)
    TRACE_L1("GrepWindow::onCheck");
 
    if (obj == searchfilename)
+   {
       if ((bool) ptr == true)
          filter->disable();
       else
          filter->enable();
+   }
+   else if (obj == exclude)
+   {
+      if ((bool) ptr == true)
+         exclude_combo->enable();
+      else
+         exclude_combo->disable();
+   }
 
    return 0;
 }

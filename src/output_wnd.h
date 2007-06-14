@@ -51,12 +51,13 @@ public:
 
    ~OutputWindow() 
    {
+      _grep->stop();
       delete _rcmenu;
       delete _outputlist;
       delete font;
-      delete _grep;
       outputWindow[_index] = NULL; 
       //nextFreeSlot = _index;
+	  delete _grep;
    }
 
    virtual void create();

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 9.00
 # Visual C++ Express 2005
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "wgrep", "wgrep.vcproj", "{C84D4914-DB37-4B1C-BAB6-71DD63A4B2AB}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "wgrep", "wgrep.vcproj", "{C4BFFD72-E816-45FF-BB42-2AEFAB135460}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -9,10 +9,10 @@ Global
 		Release|Win32 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{C84D4914-DB37-4B1C-BAB6-71DD63A4B2AB}.Debug|Win32.ActiveCfg = Debug|Win32
-		{C84D4914-DB37-4B1C-BAB6-71DD63A4B2AB}.Debug|Win32.Build.0 = Debug|Win32
-		{C84D4914-DB37-4B1C-BAB6-71DD63A4B2AB}.Release|Win32.ActiveCfg = Release|Win32
-		{C84D4914-DB37-4B1C-BAB6-71DD63A4B2AB}.Release|Win32.Build.0 = Release|Win32
+		{C4BFFD72-E816-45FF-BB42-2AEFAB135460}.Debug|Win32.ActiveCfg = Debug|Win32
+		{C4BFFD72-E816-45FF-BB42-2AEFAB135460}.Debug|Win32.Build.0 = Debug|Win32
+		{C4BFFD72-E816-45FF-BB42-2AEFAB135460}.Release|Win32.ActiveCfg = Release|Win32
+		{C4BFFD72-E816-45FF-BB42-2AEFAB135460}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
