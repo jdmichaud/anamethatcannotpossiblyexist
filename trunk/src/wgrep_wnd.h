@@ -67,7 +67,8 @@ public:
       ID_ADVANCED,
       ID_KEYPRESS,
       ID_SEARCHFILENAME_CHECK,
-      ID_EXCLUDE_CHECK
+      ID_EXCLUDE_CHECK,
+	  ID_SILDER_BIG_TEXT
    };
 
    long onExit(void);
@@ -78,6 +79,7 @@ public:
    long onKeyPress(FXObject*, FXSelector, void*);
    void setOutputIndex(unsigned short index);
    long onCheck(FXObject* obj, FXSelector sel, void* ptr);
+   long onBiggerThanSlider(FXObject* obj, FXSelector sel, void* ptr);
    void newExternalInstance(const std::string &command);
    void getFilter(const std::string &str, std::vector<std::string> &v);
 
@@ -100,9 +102,13 @@ protected:
   FXCheckButton     *outputpane2;
   FXCheckButton     *searchfilename;
   FXCheckButton     *exclude;
+  FXCheckButton     *exclude_filter;
+  FXCheckButton     *exclude_bigger;
 
-  FXFont              *font;                    // Text window font
-  FXString             searchpath;              // To search for files
+  FXFont            *font;                    // Text window font
+  FXString          searchpath;              // To search for files
+  FXSlider			*slider;
+  FXText			*text_bigger;
 
   FXDirDialog       *_dirDialog;
 

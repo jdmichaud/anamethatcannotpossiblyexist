@@ -24,6 +24,7 @@ FXDEFMAP(GrepWindow) GrepWindowMap[]={
   FXMAPFUNC(SEL_COMMAND,           GrepWindow::ID_CLOSE,                   GrepWindow::onCancel),
   FXMAPFUNC(SEL_COMMAND,           GrepWindow::ID_SEARCHFILENAME_CHECK,    GrepWindow::onCheck),
   FXMAPFUNC(SEL_COMMAND,           GrepWindow::ID_EXCLUDE_CHECK,		   GrepWindow::onCheck),
+  FXMAPFUNC(SEL_CHANGED,           GrepWindow::ID_SILDER_BIG_TEXT,		   GrepWindow::onBiggerThanSlider),
   FXMAPFUNC(SEL_KEYPRESS,          NULL,                                   GrepWindow::onKeyPress)
 };
 
@@ -94,9 +95,21 @@ GrepWindow::GrepWindow(FXApp *a, char *startingfolder)
    directory->setNumVisible(4);
 
    // Advanced part of the window
-   exclude       = new FXCheckButton(this, "Exclude:", this, ID_EXCLUDE_CHECK, CHECKBUTTON_NORMAL | LAYOUT_EXPLICIT | JUSTIFY_LEFT, 10, 155, 65, 20);
-   exclude_combo = new FXComboBox(this, 26, NULL, 0, COMBOBOX_NORMAL | LAYOUT_EXPLICIT, 100, 154, 173, 20);
+   exclude       = new FXCheckButton(this, "Exclude", this, ID_EXCLUDE_CHECK, CHECKBUTTON_NORMAL | LAYOUT_EXPLICIT | JUSTIFY_LEFT, 10, 155, 65, 20);
+   exclude_filter= new FXCheckButton(this, "Filter:", this, ID_EXCLUDE_CHECK, CHECKBUTTON_NORMAL | LAYOUT_EXPLICIT | JUSTIFY_LEFT, 20, 178, 65, 20);
+   exclude_combo = new FXComboBox(this, 26, NULL, 0, COMBOBOX_NORMAL | LAYOUT_EXPLICIT, 110, 175, 163, 20);
+   exclude_bigger= new FXCheckButton(this, "Bigger than (MB):", this, ID_EXCLUDE_CHECK, CHECKBUTTON_NORMAL | LAYOUT_EXPLICIT | JUSTIFY_LEFT, 20, 200, 105, 20);
+   slider		 = new FXSlider(this, this, ID_SILDER_BIG_TEXT, LAYOUT_EXPLICIT, 130, 203, 145, 15);
+   text_bigger	 = new FXText(this, NULL, 0, LAYOUT_EXPLICIT, 290, 202, 50, 17);
+   char value[32];
+   sprintf(value, "%i", slider->getValue());
+   text_bigger->setText(value);
+
+   exclude_filter->disable();
    exclude_combo->disable();
+   exclude_bigger->disable();
+   slider->disable();
+   text_bigger->disable();
 }
   
 void GrepWindow::create()
@@ -157,12 +170,22 @@ long GrepWindow::onFind(FXObject*, FXSelector, void*)
    options.subfolders   = subfolders->getCheck();
    options.regexp       = regexpenabled->getCheck();
    options.searchfilename = searchfilename->getCheck();
-   if (options.exclude = exclude->getCheck())
+   if (exclude->getCheck())
    {
-      FXString     tempx = exclude_combo->getText();
-      std::string  exclude_filter(tempx.text());
-      TRACE_L1("GrepWindow::onFind: excluding: " << exclude_filter);
-      getFilter(exclude_filter, options.exclude_list);
+	  if (exclude_filter->getCheck())
+	  {
+		  options.exclude = true;
+		  FXString     tempx = exclude_combo->getText();
+		  std::string  exclude_filter(tempx.text());
+		  TRACE_L1("GrepWindow::onFind: excluding: " << exclude_filter);
+		  getFilter(exclude_filter, options.exclude_list);
+	  }
+	  if (exclude_bigger->getCheck())
+	  {
+		  options.exclude = true;
+		  FXString     tempx = text_bigger->getText();
+		  options.notbiggerthan = atoi(tempx.text());
+	  }
    }
 
    if (outputpane2->getCheck() || !outputWindow[_currentOutputIndex])
@@ -230,7 +253,7 @@ long GrepWindow::onAdvanced(FXObject*, FXSelector, void*)
   {
     _advanced = true;
     advanced->setText("Advanced<<");
-	resize(390, 300);
+	resize(390, 230);
   }
   else
   {
@@ -291,9 +314,44 @@ long GrepWindow::onCheck(FXObject* obj, FXSelector sel, void* ptr)
    else if (obj == exclude)
    {
       if ((bool) ptr == true)
-         exclude_combo->enable();
+	  {
+         exclude_filter->enable();
+         if (exclude_filter->getCheck()) exclude_combo->enable();
+         exclude_bigger->enable();
+         if (exclude_bigger->getCheck())
+		 {
+            slider->enable();
+            text_bigger->enable();
+         }
+	  }
       else
+	  {
+         exclude_filter->disable();
          exclude_combo->disable();
+         exclude_bigger->disable();
+         slider->disable();
+         text_bigger->disable();
+	  }
+   }
+   else if (obj == exclude_filter)
+   {
+      if ((bool) ptr == true)
+         exclude_combo->enable();
+	  else
+		 exclude_combo->disable();
+   }
+   else if (obj == exclude_bigger)
+   {
+      if ((bool) ptr == true)
+	  {
+         slider->enable();
+         text_bigger->enable();
+	  }
+	  else
+	  {
+         slider->disable();
+         text_bigger->disable();
+	  }
    }
 
    return 0;
@@ -325,8 +383,8 @@ void GrepWindow::newExternalInstance(const std::string &command)
 long GrepWindow::onExit(void)
 {
 #ifdef WIN32
-   unsigned int i = 0;
-   unsigned int j;
+   int i = 0;
+   int j;
    if (strcmp(regexp->getText().text(), ""))
    {
       char  keyStr[256];
@@ -371,6 +429,15 @@ long GrepWindow::onExit(void)
       GrepApp::addKeyValue("HKEY_CURRENT_USER", FOLDERS_FOLDER, key, directory->getItem(j).text());
    }
 #endif // !WIN32
+
+   return 0;
+}
+
+long GrepWindow::onBiggerThanSlider(FXObject* obj, FXSelector sel, void* ptr)
+{
+   char value[32];
+   sprintf(value, "%i", (unsigned int) pow((double) 1.1, (double) (unsigned int) ptr));
+   text_bigger->setText(value);
 
    return 0;
 }

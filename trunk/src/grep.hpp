@@ -27,9 +27,9 @@ struct location_t
 
 struct options_t
 {
-   options_t() : matchcase(false), subfolders(true), wholeword(false), regexp(true), searchfilename(false), exclude(false) {}
-   options_t(bool m, bool s, bool w, bool r, bool f, bool x) 
-      : matchcase(m), subfolders(s), wholeword(w), regexp(r), searchfilename(f), exclude(x) {}
+   options_t() : matchcase(false), subfolders(true), wholeword(false), regexp(true), searchfilename(false), exclude(false), notbiggerthan(0) {}
+   options_t(bool m, bool s, bool w, bool r, bool f, bool x, unsigned int b) 
+      : matchcase(m), subfolders(s), wholeword(w), regexp(r), searchfilename(f), exclude(x), notbiggerthan(b) {}
 
    bool matchcase;
    bool subfolders;
@@ -37,8 +37,8 @@ struct options_t
    bool regexp;
    bool searchfilename;
    bool exclude;
-
    std::vector<std::string> exclude_list;
+   unsigned int notbiggerthan;
 };
 
 class Grep
@@ -60,6 +60,7 @@ public:
       _options.regexp      = true;
       _options.searchfilename = false;
       _options.exclude     = false;
+	  _options.notbiggerthan = 0;
    }
 
    Grep(std::string                    regexp,
@@ -181,6 +182,13 @@ public:
 					    excluded = true;
 				     }
                   }
+
+				  if (!excluded && _options.notbiggerthan)
+				  {
+				     int tmp = boost::filesystem::file_size(file) / 1048576;
+                     if (excluded = (tmp > _options.notbiggerthan))
+						TRACE_L2("grep_folder: file " << file.leaf() << " is bigger than " << _options.notbiggerthan << "MB");
+				  }
 			   }
 
 			   if (!excluded) count += process_file(file);
