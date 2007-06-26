@@ -237,7 +237,7 @@ long OutputWindow::launchItem()
    for (unsigned int i = 0; (i = filename.find("/", 0)) != std::string::npos; ++it)
       filename.replace(i, 1, "\\");
 
-   std::string command = _editorPath + " " + filename + " /" + itoa(_grep->_locations[_itemIndex].line, linestr, 10);
+   std::string command = _editorPath + " \"" + filename + "\" /" + itoa(_grep->_locations[_itemIndex].line, linestr, 10);
    TRACE_L1("OutputWindow::launchItem: Launch " << _editorName << " with: " << command);
    thread_command_t editorThread(command);
    boost::thread thrd(editorThread);

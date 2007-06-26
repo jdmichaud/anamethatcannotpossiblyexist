@@ -51,6 +51,7 @@ begin
   begin
     if RegQueryStringValue(HKEY_CURRENT_USER, 'Software\PSPad', 'PSPadPath', PSPadPath) then
     begin
+      StringChangeEx(PSPadPath, '"', '', True);
       RegWriteStringValue(HKEY_CURRENT_USER, 'SOFTWARE\wgrep', 'EditorName', 'PSPad');
       RegWriteStringValue(HKEY_CURRENT_USER, 'SOFTWARE\wgrep', 'EditorPath', PSPadPath);
     end else begin
