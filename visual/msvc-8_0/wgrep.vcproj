@@ -99,7 +99,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
-			CharacterSet="1"
+			CharacterSet="0"
 			WholeProgramOptimization="1"
 			>
 			<Tool
@@ -107,6 +107,8 @@
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
+				CommandLine="pwd&#x0D;&#x0A;cd D:\viewstore\test\wgrep\Installer &amp;&amp; makesetup.bat"
+				Outputs="pwd"
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
@@ -119,6 +121,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalIncludeDirectories="&quot;D:\Stuff\fox-1.6.14\include&quot;;&quot;D:\Program Files\boost-cvs\boost&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
@@ -137,11 +140,14 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="FOX-1.6.lib wsock32.lib"
 				LinkIncremental="1"
+				AdditionalLibraryDirectories="&quot;D:\Stuff\fox-1.6.14\lib&quot;;&quot;D:\Program Files\boost-cvs\boost\stage\lib&quot;"
 				GenerateDebugInformation="true"
-				SubSystem="1"
+				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
+				EntryPointSymbol="mainCRTStartup"
 				TargetMachine="1"
 			/>
 			<Tool
