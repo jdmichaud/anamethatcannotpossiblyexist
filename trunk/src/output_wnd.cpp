@@ -234,7 +234,7 @@ long OutputWindow::launchItem()
 
    std::string filename = _grep->_locations[_itemIndex].filename.native_file_string();
    std::string::iterator it = filename.begin();
-   for (unsigned int i = 0; (i = filename.find("/", 0)) != std::string::npos; ++it)
+   for (std::size_t i = 0; (i = filename.find("/", 0)) != std::string::npos; ++it)
       filename.replace(i, 1, "\\");
 
    std::string command = _editorPath + " \"" + filename + "\" /" + itoa(_grep->_locations[_itemIndex].line, linestr, 10);
@@ -298,12 +298,12 @@ long OutputWindow::onOpenResultAsText(FXObject *obj, FXSelector sel, void *ptr)
    
    std::ofstream output_file((_wgrepPath + "\\output.txt").c_str(), std::ios_base::out | std::ios_base::trunc);
 
-   for (unsigned int i = 0; i < _outputlist->getNumItems(); ++i)
-      output_file << _outputlist->getItemText(i).text();
+   for (int i = 0; i < _outputlist->getNumItems(); ++i)
+     output_file << _outputlist->getItemText(i).text() << std::endl;
 
    output_file.close();
  
-   std::string command = _editorPath + " " + _wgrepPath + "\\output.txt";
+   std::string command = _editorPath + " \"" + _wgrepPath + "\\output.txt\"";
    TRACE_L1("OutputWindow::onOpenResultAsText: Launch " << _editorName << " with: " << command);
    thread_command_t editorThread(command);
    boost::thread thrd(editorThread);

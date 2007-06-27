@@ -183,12 +183,12 @@ public:
 				     }
                   }
 
-				  if (!excluded && _options.notbiggerthan)
-				  {
-				     int tmp = boost::filesystem::file_size(file) / 1048576;
-                     if (excluded = (tmp > _options.notbiggerthan))
-						TRACE_L2("grep_folder: file " << file.leaf() << " is bigger than " << _options.notbiggerthan << "MB");
-				  }
+          if (!excluded && _options.notbiggerthan)
+          {
+            boost::uintmax_t tmp = boost::filesystem::file_size(file) / 1048576;
+            if (excluded = (tmp > _options.notbiggerthan))
+              TRACE_L2("grep_folder: file " << file.leaf() << " is bigger than " << _options.notbiggerthan << "MB");
+          }
 			   }
 
 			   if (!excluded) count += process_file(file);
