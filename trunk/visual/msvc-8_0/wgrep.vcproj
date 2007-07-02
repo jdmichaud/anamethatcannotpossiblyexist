@@ -61,9 +61,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="FOXD-1.6.lib wsock32.lib"
+				AdditionalDependencies="FOXD-1.6.lib wsock32.lib xmlrpcd.lib"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;D:\Stuff\fox-1.6.14\lib&quot;;&quot;D:\Program Files\boost-cvs\boost\stage\lib&quot;"
+				AdditionalLibraryDirectories="&quot;D:\Program Files\xmlrpc++0.7\Debug&quot;;&quot;D:\Stuff\fox-1.6.14\lib&quot;;&quot;D:\Program Files\boost-cvs\boost\stage\lib&quot;"
 				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -107,7 +107,7 @@
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
-				CommandLine="pwd&#x0D;&#x0A;cd D:\viewstore\test\wgrep\Installer &amp;&amp; makesetup.bat"
+				CommandLine="pwd&#x0D;&#x0A;cd D:\viewstore\test\wgrep\Installer &amp;&amp; makesetup.bat&#x0D;&#x0A;"
 				Outputs="pwd"
 			/>
 			<Tool
@@ -140,9 +140,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="FOX-1.6.lib wsock32.lib"
+				AdditionalDependencies="FOX-1.6.lib wsock32.lib xmlrpc.lib"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;D:\Stuff\fox-1.6.14\lib&quot;;&quot;D:\Program Files\boost-cvs\boost\stage\lib&quot;"
+				AdditionalLibraryDirectories="&quot;D:\Program Files\xmlrpc++0.7\Release&quot;;&quot;D:\Stuff\fox-1.6.14\lib&quot;;&quot;D:\Program Files\boost-cvs\boost\stage\lib&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
