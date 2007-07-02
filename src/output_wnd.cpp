@@ -285,7 +285,7 @@ long OutputWindow::onOpenContainingFolder(FXObject *obj, FXSelector sel, void *p
    TRACE_L1("OutputWindow::onOpenContainingFolder open containing folder : " << cfolder);
    _rcmenu->hide();
 
-   std::string command = std::string("start /b explorer /select,") + _grep->_locations[_itemIndex].filename.native_file_string();
+   std::string command = std::string("explorer /select,") + _grep->_locations[_itemIndex].filename.native_file_string();
    thread_command_t editorThread(command);
    boost::thread thrd(editorThread);
    
