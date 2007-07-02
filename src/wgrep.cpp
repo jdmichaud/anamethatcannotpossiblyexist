@@ -10,6 +10,7 @@
 #include <iostream>
 #include <crtdbg.h>
 #include <boost/thread.hpp>
+#include <boost/bind.hpp>
 #include "log_server.h"
 #include "fx.h"
 #include "wgrep_app.h"
@@ -17,7 +18,7 @@
 #include "output_wnd.h"
 #include "limit_single_instance.h"
 
-#define VERSION 0.4.0
+#define VERSION 0.6.0
 
 #ifdef _DEBUG
  LogServer *logServer = LogServer::Instance(2, true, true,  GrepApp::getKeyValue("HKEY_CURRENT_USER", "Software\\wgrep", "wgrepPath") + "\\wgrep.log");
@@ -55,13 +56,20 @@ int main(int argc, char *argv[])
    else
       grepWindow = new GrepWindow(application);
 
-   CSingleInstanceApp instance(TEXT("wgrep jean-daniel.michaud@laposte.net"), application);
+   InstanceDetector id;
+   if (!id.new_instance(argc, argv))
+   {
+     TRACE_L1("main: Not the first, exiting...");
+     return 0;
+   }
+
+   CommandHandler instance;
 
    // Set the window to forward message
    instance.setMainWindow(grepWindow);
    try
    {
-     boost::thread thrd(instance);
+     boost::thread thrd(boost::bind(&CommandHandler::operator(), &instance));
    }
    catch (...)
    {

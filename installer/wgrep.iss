@@ -3,7 +3,7 @@
 
 [Setup]
 AppName=wgrep
-AppVerName=wgrep 0.5.0
+AppVerName=wgrep 0.6.0
 DefaultDirName={pf}\wgrep
 DefaultGroupName=wgrep
 UsePreviousAppDir=yes
