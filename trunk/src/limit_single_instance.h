@@ -1,154 +1,103 @@
-/////////////////////////////////////////////////////////////////////////////
-// SingleInstanceApp.h
-// Abstract:
-//		SingleInstanceApp class implements functionality to make
-//		single instance app.	
-//
-// (L) Copyleft Maxim Egorushkin. e-maxim@yandex.ru
-// Thanks by e-mail would be enough to use it :)
-
-#pragma once
-#include <windows.h>
-#include <string>
-#include "wgrep_wnd.h"
+#include <iostream>
 #include "log_server.h"
+#include "XmlRpc.h"
+using namespace XmlRpc;
 
-/////////////////////////////////////////////////////////////////////////////
-// CSingleInstanceApp
-// Abstract:
-//		MFC friendly wrapper of SingleInstanceApp. Derive your application
-//		class from it instead of CWinApp.
+//Forward declaration
+class NewInstance;
 
-class CSingleInstanceApp
+class CommandHandler
 {
 public:
-   CSingleInstanceApp(const std::string &pszUniqueString, GrepApp *application) 
-      : _uniqueString(pszUniqueString), _application(application)
-   {
-   }
+  CommandHandler();
+  void operator()();
+  ~CommandHandler();
 
-   void setMainWindow(GrepWindow *mainWindow)
-   {
-      _mainWindow = mainWindow;
-   }
-
-	// parameters:
-	//		[in] pszUniqueString - string to give the file mapping 
-	//		system unique name. GUID would fit the best.
-	//		[out] uMessage - variable to register message to.
-	//		This message will be posted to first app instance thread.
-	//		So, intrested app can process this message to get the command line
-	//		the second instance was tried to launch with.
-	void createInstance(LPCTSTR pszUniqueString)
-   {
-      _uMessage = ::RegisterWindowMessage(pszUniqueString);
-      TRACE_L2("createInstance: unique string: " << pszUniqueString << " message handle: " << _uMessage);
-
-      _hMapping = ::CreateFileMapping(
-         INVALID_HANDLE_VALUE,
-         0,
-         PAGE_READWRITE,
-         0,
-         sizeof(*_pSharedData),
-         pszUniqueString);
-
-      TRACE_L2("createInstance: map handle: " << std::hex << _hMapping);
-      
-      // ::GetLastError returns ERROR_ALREADY_EXISTS for the second instance
-      //S_OK == ::GetLastError();
-      DWORD lastError = ::GetLastError();
-      _bAmITheFirst = (lastError == S_OK);
-      
-      _pSharedData = static_cast<SharedData*>(::MapViewOfFile(_hMapping, FILE_MAP_WRITE, 0, 0, 0));
-      
-      if (_bAmITheFirst)
-      {
-         // set the thread ID of the first instance to the shared mapping
-         _pSharedData->dwThreadID = ::GetCurrentThreadId();
-         TRACE_L2("createInstance: GetCurrentThreadId(): " << _pSharedData->dwThreadID);
-         // set empty command line
-         _pSharedData->pszCmdLine[0] = 0; 
-      }
-      else
-      {
-         // copy command line to shared mapping
-         ::lstrcpyn(_pSharedData->pszCmdLine, ::GetCommandLine(), 
-            sizeof(_pSharedData->pszCmdLine) / sizeof(*_pSharedData->pszCmdLine));
-         // post the notification message to the first instance
-         ::PostThreadMessage(_pSharedData->dwThreadID, _uMessage, 0, 0);
-         TRACE_L2("createInstance: sending " << _uMessage << " to thread " << _pSharedData->dwThreadID);
-      }
-   }
-
-
-  ~CSingleInstanceApp()
+  void setMainWindow(GrepWindow *mainWindow)
   {
-    ::UnmapViewOfFile(_pSharedData);
-    //::CloseHandle(_hMapping); // Crash on this
+    _mainWindow = mainWindow;
   }
 
-	// returns:
-	//		true if running the first instance
-	bool isFirst() const
-   {
-	   return _bAmITheFirst;
-   }
-
-  // returns:
-  //		The command line the second instance was tried to launch with.
-  LPCTSTR GetSecondInstanceCmdLine() const
-  {
-    return _pSharedData->pszCmdLine;
-  }
-
-   // Override this to get notified when second instance was tried to launch.
-	virtual void OnSecondInstance()
-  {
-    TRACE_L1("---- Second instance was tried to launch.");
-    TRACE_L1("---- Command line is \"" << GetSecondInstanceCmdLine() << "\".");
-    TRACE_L1("---- Override CSingleInstanceApp::OnSecondInstance to do something.");
-    _mainWindow->newExternalInstance(GetSecondInstanceCmdLine());
-  }
-
-   void operator()()
-   {
-      TRACE_L1("CSingleInstanceApp(): listening to wgrep application creation...");
-
-      createInstance(_uniqueString.c_str());
-      if (!isFirst())
-      {
-         TRACE_L1("CSingleInstanceApp(): wgrep is already launched. Sending message to present instance...");
-         TRACE_L1("CSingleInstanceApp(): wgrep down");
-         _application->exit();
-         exit(1); // just in case
-      }
-
-      MSG msg;
-      while (GetMessage(&msg, NULL, 0, 0))
-      {
-         if (_uMessage == msg.message)
-         {
-            TRACE_L1("CSingleInstanceApp(): external wgrep launched.");
-            OnSecondInstance();
-            continue;
-         }
-      }
-   }
-
-private:
-	bool        _bAmITheFirst;
-	HANDLE      _hMapping;
-	
-struct SharedData
-	{
-		DWORD dwThreadID;
-		TCHAR pszCmdLine[0x800];
-	}           *_pSharedData;
-
-  GrepWindow  *_mainWindow;
-  GrepApp     *_application;
-  std::string _uniqueString;
-  UINT        _uMessage;
+  XmlRpcServer  m_s;
+  GrepWindow    *_mainWindow;
+  int           m_portNumber;
+  NewInstance   *m_new_intance_function_object;
 };
 
-/////////////////////////////////////////////////////////////////////////////
+class NewInstance : public XmlRpcServerMethod
+{
+public:
+  NewInstance(XmlRpcServer* s, CommandHandler *c) : XmlRpcServerMethod("new_instance", s) 
+  {
+    m_c = c;
+  }
+
+  void execute(XmlRpcValue& params, XmlRpcValue& result)
+  {
+    std::string args = std::string(params[0]);
+    TRACE_L1("NewInstance::execute: received a connection with command line: " << args);
+    if (m_c->_mainWindow)
+    {
+      TRACE_L1("NewInstance::execute: calling newExternalInstance");
+      m_c->_mainWindow->newExternalInstance(args);
+    }
+  }
+
+  CommandHandler *m_c;
+};
+
+
+class InstanceDetector
+{
+public:
+  InstanceDetector() {}
+
+  bool new_instance(int argc, char **argv)
+  {
+    std::string command_line = argv[0];
+    for (int i = 1; i < argc; ++i)
+      command_line += std::string(" ") + argv[i];
+
+    XmlRpcClient c("localhost", 12000);
+    XmlRpcValue args = command_line;
+    XmlRpcValue result;
+
+    TRACE_L1("InstanceDetector::new_instance called with command line: " << command_line);
+    if (c.execute("new_instance", args, result))
+    {
+      TRACE_L1("InstanceDetector::new_instance wgrep is already launched");
+      return false;
+    }
+    else
+    {
+      TRACE_L1("InstanceDetector::new_instance we are the first!");
+      return true;
+    }
+  }
+};
+
+CommandHandler::CommandHandler()
+{ 
+  m_portNumber = 12000; 
+  m_new_intance_function_object = new NewInstance(&m_s, this);
+}
+
+CommandHandler::~CommandHandler()
+{
+  delete m_new_intance_function_object;
+}
+
+void CommandHandler::operator ()()
+{
+  XmlRpc::setVerbosity(0);
+
+  // Create the server socket on the specified port
+  m_s.bindAndListen(12000);
+
+  // Enable introspection
+  m_s.enableIntrospection(true);
+
+  TRACE_L1("CommandHandler: Waiting for a connection on " << m_portNumber << " ...");
+  // Wait for requests indefinitely
+  m_s.work(-1.0);
+}
