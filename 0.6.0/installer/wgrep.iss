@@ -3,7 +3,7 @@
 
 [Setup]
 AppName=wgrep
-AppVerName=wgrep 0.6.0
+AppVerName=wgrep 0.6.1
 DefaultDirName={pf}\wgrep
 DefaultGroupName=wgrep
 UsePreviousAppDir=yes
@@ -35,9 +35,9 @@ Root: HKCU; Subkey: "SOFTWARE\wgrep"; ValueType: string; ValueName: "wgrepPath";
 Root: HKCU; Subkey: "SOFTWARE\wgrep\regexps"; Flags: uninsdeletekey
 
 Root: HKCU; Subkey: "SOFTWARE\wgrep\filters"; Flags: uninsdeletekey
-Root: HKCU; Subkey: "SOFTWARE\wgrep\filters"; ValueType: string; ValueName: "0"; ValueData: "*.c;*.cpp;*.cxx;*.tli;*.h;*.tlh;*.inl;*.rc;*.tcl"; Flags: uninsdeletekey
-Root: HKCU; Subkey: "SOFTWARE\wgrep\filters"; ValueType: string; ValueName: "1"; ValueData: "*.txt"; Flags: uninsdeletekey
-Root: HKCU; Subkey: "SOFTWARE\wgrep\filters"; ValueType: string; ValueName: "2"; ValueData: "*.*"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "SOFTWARE\wgrep\filters"; ValueType: string; ValueName: "0"; ValueData: ".*c;.*cpp;.*cxx;.*tli;.*h;.*tlh;.*inl;.*rc;.*tcl"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "SOFTWARE\wgrep\filters"; ValueType: string; ValueName: "1"; ValueData: ".*txt"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "SOFTWARE\wgrep\filters"; ValueType: string; ValueName: "2"; ValueData: ".*"; Flags: uninsdeletekey
 
 Root: HKCU; Subkey: "SOFTWARE\wgrep\folders"; Flags: uninsdeletekey
 Root: HKCU; Subkey: "SOFTWARE\wgrep\folders"; ValueType: string; ValueName: "0"; ValueData: "c:\"; Flags: uninsdeletekey

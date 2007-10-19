@@ -94,14 +94,12 @@ public:
          std::vector<std::string>::iterator it = _filters.begin();
          while (it != _filters.end())
 		 {
-		    prepareFilter(*it);
             TRACE_L1("grep: " << *it++);
 		 }
 
 		 it = _options.exclude_list.begin();
          while (it != _options.exclude_list.end())
 		 {
-		    prepareFilter(*it);
             TRACE_L1("grep: exclude " << *it++);
 		 }
 
@@ -295,12 +293,6 @@ public:
 	  }
    }
 
-   void prepareFilter(std::string &filter)
-   {
-      size_t dotpos = filter.find_last_of('.');
-      filter.replace(dotpos, 1, "\\.");
-      filter = std::string(".") + filter + "$";
-   }
 
 public:
    std::vector<location_t> _locations;

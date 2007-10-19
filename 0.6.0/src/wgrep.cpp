@@ -18,7 +18,7 @@
 #include "output_wnd.h"
 #include "limit_single_instance.h"
 
-#define VERSION 0.6.0
+#define VERSION 0.6.1
 
 #ifdef _DEBUG
  LogServer *logServer = LogServer::Instance(2, true, true,  GrepApp::getKeyValue("HKEY_CURRENT_USER", "Software\\wgrep", "wgrepPath") + "\\wgrep.log");
