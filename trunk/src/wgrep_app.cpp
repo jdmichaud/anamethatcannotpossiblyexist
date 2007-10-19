@@ -6,7 +6,13 @@
 #pragma warning(disable:4786)
 
 #ifdef WIN32
-#include <windows.h>
+# ifdef _DEBUG
+#  define _CRTDBG_MAP_ALLOC
+#  include <stdlib.h>
+#  include <crtdbg.h>
+# endif
+
+# include <windows.h>
 #endif // WIN32
 
 #include <vector>

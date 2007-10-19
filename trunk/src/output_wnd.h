@@ -83,16 +83,18 @@ public:
    }
    
    OutputWindow(FXApp* a, GrepWindow *mainWindow, unsigned short index);
-
+   
    ~OutputWindow() 
    {
       _grep->stop();
+		  boost::mutex::scoped_lock scoped_lock(callbackMutex); // Deadlock mutex (?)
+      outputWindow[_index] = NULL; 
+      //nextFreeSlot = _index;
+	    delete _grep;
+
       delete _rcmenu;
       delete _outputlist;
       delete font;
-      outputWindow[_index] = NULL; 
-      //nextFreeSlot = _index;
-	  delete _grep;
    }
 
    virtual void create();
@@ -128,7 +130,8 @@ public:
 
    static bool callback(const std::string& text, void *ptr) 
    { 
-		// boost::mutex::scoped_lock scoped_lock(callbackMutex); // Deadlock mutex (?)
+		  boost::mutex::scoped_lock scoped_lock(callbackMutex); // Deadlock mutex (?)
+    //  boost::mutex::scoped_lock lk(_stop_mutex);
 
       unsigned short i = ((ptr != NULL) ? (unsigned short) ptr : 0);
 
@@ -139,7 +142,7 @@ public:
 
    static bool onfile_callback(const std::string& text, void *ptr) 
    { 
-		// boost::mutex::scoped_lock scoped_lock(callbackMutex); // Deadlock mutex (?)
+		  boost::mutex::scoped_lock scoped_lock(callbackMutex); // Deadlock mutex (?)
 
       unsigned short i = ((ptr != NULL) ? (unsigned short) ptr : 0);
 
