@@ -17,7 +17,6 @@
 
 typedef bool (*GrepCallback)(const std::string&, void *ptr);
 
-
 struct location_t
 {
   location_t(boost::filesystem::path _f, unsigned int _l) : filename(_f), line(_l) {}
@@ -45,8 +44,8 @@ class Grep
 {
 public:
   Grep(const std::string              &regexp, 
-    const std::string              path, 
-    const std::vector<std::string> filters,
+    const std::string              &path, 
+    const std::vector<std::string> &filters,
     GrepCallback                   find_callback = NULL,
     GrepCallback                   file_callback = NULL,
     void                           *ptr = NULL) : 
@@ -94,14 +93,12 @@ public:
       std::vector<std::string>::iterator it = _filters.begin();
       while (it != _filters.end())
       {
-        prepareFilter(*it);
         TRACE_L1("grep: " << *it++);
       }
 
       it = _options.exclude_list.begin();
       while (it != _options.exclude_list.end())
       {
-        prepareFilter(*it);
         TRACE_L1("grep: exclude " << *it++);
       }
 
@@ -229,7 +226,7 @@ public:
         ((_options.matchcase) ? boost::regex_constants::normal : boost::regex_constants::icase));
       if(result)
       {
-        if (_find_callback) _find_callback(filename.string(), _ptr);
+        if (!_stop && _find_callback) _find_callback(filename.string(), _ptr);
         _locations.push_back(location_t(filename/*.string()*/, linenum));
         ++count;
         ++_occurences;
@@ -243,7 +240,7 @@ public:
         std::cout << filename.string() << ": " << line << std::endl;
         char linestr[256];
 
-        if (_find_callback && !_stop) 
+        if (!_stop && _find_callback) 
           _find_callback(filename.string() + "(" + itoa(linenum, linestr, 10) + "):" + line, _ptr);
 
         _locations.push_back(location_t(filename/*.string()*/, linenum));
@@ -287,19 +284,11 @@ public:
     if (!_stop)
     {
       TRACE_L2("Grep::stop: stop called");
-      boost::mutex::scoped_lock lk(_stop_mutex);
       TRACE_L2("Grep::stop: waiting for grep termination notification");
       _stop = true;
-      _thread_stopped.wait(lk);
+//      _thread_stopped.wait(lk);
       TRACE_L2("Grep::stop: exiting...");
     }
-  }
-
-  void prepareFilter(std::string &filter)
-  {
-    size_t dotpos = filter.find_last_of('.');
-    filter.replace(dotpos, 1, "\\.");
-    filter = std::string(".") + filter + "$";
   }
 
 public:

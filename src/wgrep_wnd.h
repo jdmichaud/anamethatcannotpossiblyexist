@@ -25,29 +25,29 @@ class GrepWindow : public FXMainWindow
 
    struct thread_grep_t
    {
-      thread_grep_t(Grep *grep, unsigned short index) : _grep(grep), _index(index) { }
-      void operator()()
-      {
-         TRACE_L1("GrepWindow::onFind grep started on output window index " << _index);
+     thread_grep_t(Grep *grep, unsigned short index) : _grep(grep), _index(index) { }
+     void operator()()
+     {
+       TRACE_L1("GrepWindow::onFind grep started on output window index " << _index);
 
-         unsigned int occurences = _grep->grep();
-		 if (!_grep->_stop) // If output_window terminating, no need to add anything in it
-		 {
-		    char  occstr[256];
-		    OutputWindow::callback(std::string(itoa(occurences, occstr, 10)) + " occurrence(s) have been found.", (void *) _index);
-            outputWindow[_index]->setExplicitTitle("");
+       unsigned int occurences = _grep->grep();
+       if (!_grep->_stop) // If output_window terminating, no need to add anything in it
+       {
+         char  occstr[256];
+         OutputWindow::callback(std::string(itoa(occurences, occstr, 10)) + " occurrence(s) have been found.", (void *) _index);
+         outputWindow[_index]->setExplicitTitle("");
 
-            busyOutput[_index] = false;
+         busyOutput[_index] = false;
 
-            TRACE_L1("GrepWindow::onFind grep done on output window index " << _index);
-		 }
-         TRACE_L2("grep: notifying grep stop");
-		 _grep->_stop = true;
-         _grep->_thread_stopped.notify_all();
-      }
-      
-      Grep           *_grep;
-      unsigned short _index;
+         TRACE_L1("GrepWindow::onFind grep done on output window index " << _index);
+       }
+       TRACE_L2("grep: notifying grep stop");
+       _grep->_stop = true;
+       //_grep->_thread_stopped.notify_all();
+     }
+
+     Grep           *_grep;
+     unsigned short _index;
    };
 
 public:
@@ -56,6 +56,31 @@ public:
    { 
       onExit();
       getApp()->exit(); 
+
+      delete regexp;
+      delete filter;
+      delete directory;
+      delete exclude_combo;
+      delete find;
+      delete cancel;
+      delete browse;
+      delete advanced;
+
+      delete matchword;
+      delete matchcase;
+      delete regexpenabled;
+      delete subfolders;
+      delete outputpane2;
+      delete searchfilename;
+      delete exclude;
+      delete exclude_filter;
+      delete exclude_bigger;
+
+      delete font;                    
+
+      delete slider;
+      delete text_bigger;
+      delete _dirDialog;
    }
 
    virtual void create();

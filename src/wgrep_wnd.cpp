@@ -3,6 +3,14 @@
 //  0.1. (See accompanying file LICENSE_1_0.txt or copy at
 //  http://www.boost.org/LICENSE_1_0.txt)
 
+#ifdef WIN32
+# ifdef _DEBUG
+#  define _CRTDBG_MAP_ALLOC
+#  include <stdlib.h>
+#  include <crtdbg.h>
+# endif
+#endif
+
 #include <boost/thread.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/regex.hpp>
@@ -21,10 +29,10 @@ FXDEFMAP(GrepWindow) GrepWindowMap[]={
   FXMAPFUNC(SEL_COMMAND,           GrepWindow::ID_CANCEL,                  GrepWindow::onCancel),
   FXMAPFUNC(SEL_COMMAND,           GrepWindow::ID_BROWSE,                  GrepWindow::onBrowse),
   FXMAPFUNC(SEL_COMMAND,           GrepWindow::ID_ADVANCED,                GrepWindow::onAdvanced),
-  FXMAPFUNC(SEL_COMMAND,           GrepWindow::ID_CLOSE,                   GrepWindow::onCancel),
+  FXMAPFUNC(SEL_CLOSE,             NULL,                                   GrepWindow::onCancel),
   FXMAPFUNC(SEL_COMMAND,           GrepWindow::ID_SEARCHFILENAME_CHECK,    GrepWindow::onCheck),
-  FXMAPFUNC(SEL_COMMAND,           GrepWindow::ID_EXCLUDE_CHECK,		   GrepWindow::onCheck),
-  FXMAPFUNC(SEL_CHANGED,           GrepWindow::ID_SILDER_BIG_TEXT,		   GrepWindow::onBiggerThanSlider),
+  FXMAPFUNC(SEL_COMMAND,           GrepWindow::ID_EXCLUDE_CHECK,		       GrepWindow::onCheck),
+  FXMAPFUNC(SEL_CHANGED,           GrepWindow::ID_SILDER_BIG_TEXT,		     GrepWindow::onBiggerThanSlider),
   FXMAPFUNC(SEL_KEYPRESS,          NULL,                                   GrepWindow::onKeyPress)
 };
 

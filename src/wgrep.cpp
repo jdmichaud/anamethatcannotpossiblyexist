@@ -7,8 +7,15 @@
 #pragma warning(disable:4786)
 #pragma warning(disable:4005)
 
+#ifdef WIN32
+# ifdef _DEBUG
+#  define _CRTDBG_MAP_ALLOC
+#  include <stdlib.h>
+#  include <crtdbg.h>
+# endif
+#endif
+
 #include <iostream>
-#include <crtdbg.h>
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
 #include "log_server.h"
@@ -18,7 +25,7 @@
 #include "output_wnd.h"
 #include "limit_single_instance.h"
 
-#define VERSION 0.6.0
+#define VERSION 0.7.0
 
 #ifdef _DEBUG
  LogServer *logServer = LogServer::Instance(2, true, true,  GrepApp::getKeyValue("HKEY_CURRENT_USER", "Software\\wgrep", "wgrepPath") + "\\wgrep.log");
@@ -31,6 +38,8 @@ bool          busyOutput[256];
 
 int main(int argc, char *argv[])
 {
+   _CrtSetBreakAlloc(752);
+
    TRACE_L1("wgrep version " << TOSTRING(VERSION) << " up");
 
    TRACE_L2("main: argc == " << argc);

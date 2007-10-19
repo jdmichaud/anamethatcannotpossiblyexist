@@ -3,6 +3,14 @@
 //  0.1. (See accompanying file LICENSE_1_0.txt or copy at
 //  http://www.boost.org/LICENSE_1_0.txt)
 
+#ifdef WIN32
+# ifdef _DEBUG
+#  define _CRTDBG_MAP_ALLOC
+#  include <stdlib.h>
+#  include <crtdbg.h>
+# endif
+#endif
+
 #include <boost/thread/thread.hpp>
 #include <boost/thread/condition.hpp>
 #include <boost/filesystem/operations.hpp> // includes boost/filesystem/path.hpp
@@ -18,7 +26,7 @@ boost::mutex	      callbackMutex;
 
 // Map
 FXDEFMAP(OutputWindow) OutputWindowMap[] = {
-  FXMAPFUNC(SEL_COMMAND,           OutputWindow::ID_CLOSE,           OutputWindow::onCmdClose),
+  /*FXMAPFUNC(SEL_CLOSE,             NULL,                             OutputWindow::onCmdClose),*/
   FXMAPFUNC(SEL_CLICKED,           OutputWindow::ID_LISTSELECT,      OutputWindow::onListClicked),
   FXMAPFUNC(SEL_RIGHTBUTTONRELEASE,OutputWindow::ID_LISTSELECT,      OutputWindow::onListRightClicked),
   FXMAPFUNC(SEL_DOUBLECLICKED,     OutputWindow::ID_LISTSELECT,      OutputWindow::onListDoubleClicked),
@@ -106,24 +114,29 @@ void OutputWindow::setExplicitTitle(const std::string& suffix)
    this->setTitle((std::string("\"") + _pattern + "\" in " + ((suffix == "") ? _folder : suffix)).c_str());
 }
 
-long OutputWindow::onCmdClose(FXObject*, FXSelector, void*)
+long OutputWindow::onCmdClose(FXObject *o, FXSelector s, void *v)
 {
    TRACE_L1("OutputWindow::onCmdClose called");
 
    if (_grep)
    {
-     delete _grep;
-     _grep = NULL;
+     _grep->stop();
+     //delete _grep;
+     //_grep = NULL;
    }
 
+/*
    if (_thread)
    {
      delete _thread;
      _thread = NULL;
    }
    _rcmenu->hide();
-   close();
    busyOutput[_wndIndex] = false;
+   */
+   //close();
+   boost::mutex::scoped_lock lk(callbackMutex);
+   FXMainWindow::onCmdClose(o, s, v);
    return 0;
 }
 
